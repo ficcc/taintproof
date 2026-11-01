@@ -1,0 +1,31 @@
+{
+  "name": "taintproof",
+  "version": "1.0.0",
+  "description": "Claude Code security review skill that proves a vulnerability is exploitable before reporting it.",
+  "keywords": [
+    "claude-code",
+    "agent-skill",
+    "security",
+    "appsec",
+    "sast",
+    "semgrep",
+    "vulnerability-scanner",
+    "code-review"
+  ],
+  "license": "MIT",
+  "author": "ficcc",
+  "bin": {
+    "taintproof": "bin/taintproof.js"
+  },
+  "files": [
+    "SKILL.md",
+    "bin/taintproof.js",
+    "references/review-checklist.md",
+    "references/risk-rating.md",
+    "scripts/*.py",
+    "scripts/*.sh"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

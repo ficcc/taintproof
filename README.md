@@ -1,5 +1,8 @@
 # Taintproof
 
+[![npm version](https://img.shields.io/npm/v/taintproof)](https://www.npmjs.com/package/taintproof)
+[![license: MIT](https://img.shields.io/npm/l/taintproof)](LICENSE)
+
 A security review skill for [Claude Code](https://code.claude.com/docs/en/skills) that proves a vulnerability is exploitable before reporting it.
 
 Scanners are fast but noisy. AI review reads code well but can miss things and can be talked out of a finding. Taintproof combines them: deterministic tools find candidates, then Claude traces each one from source to sink, dismisses what real code stops, and writes up what is left with a calculated risk score and three ways to fix it.
@@ -34,13 +37,53 @@ The report also states what was and wasn't covered, which assumptions affect sev
 
 You need [Claude Code](https://code.claude.com/docs/en/overview) and Python 3.11 or newer. [Semgrep](https://semgrep.dev) is optional but strongly recommended, because without it the review falls back to a weaker search and says so in the report.
 
+**Option 1: npx (recommended)**
+
+```bash
+npx taintproof
+```
+
+**Option 2: global npm install**
+
+```bash
+npm install -g taintproof
+```
+
+```bash
+taintproof
+```
+
+The `taintproof` command is what installs the skill, so `npm install -g` alone isn't enough. It never runs during `npm install`.
+
+Either option copies the skill into `~/.claude/skills/taintproof` and downloads the threat intelligence, which reviews need before they can start. It won't overwrite a link or a git clone.
+
+**Then add Semgrep:**
+
+```bash
+uv tool install semgrep
+```
+
+<details>
+<summary>Install from source</summary>
+
+This needs access to the repository, and you update it with `git pull`.
+
 ```bash
 git clone https://github.com/ficcc/taintproof.git ~/.claude/skills/taintproof
-uv tool install semgrep
+```
+
+```bash
 python3 ~/.claude/skills/taintproof/scripts/update-threat-intel.py
 ```
 
-The last command downloads the threat intelligence. Reviews won't start without it, because this data is generated locally rather than stored in the repository.
+</details>
+
+**To update Taintproof itself:**
+
+| Installed with | Run |
+|---|---|
+| npx | `npx taintproof@latest` |
+| Global npm install | `npm install -g taintproof@latest`, then `taintproof` |
 
 Check that your Python and Semgrep work together:
 
@@ -170,6 +213,7 @@ The final test run passed all 15 graded checks, compared with 6 of 14 for an una
 
 ```text
 SKILL.md                      The review workflow and report template
+bin/taintproof.js             The npx installer
 references/
   risk-rating.md              OWASP factors, matrix and CVSS rules
   review-checklist.md         Manual review areas and fallback search patterns
@@ -183,7 +227,7 @@ scripts/
   intel_common.py             Shared helpers
 ```
 
-The scripts use only the Python standard library.
+The scripts use only the Python standard library, and the installer has no npm dependencies.
 
 ## License
 
