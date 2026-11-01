@@ -1,0 +1,2 @@
+# LF everywhere: a CRLF checkout would break intel-status.sh on macOS and Linux.
+* text=auto eol=lf
