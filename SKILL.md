@@ -43,9 +43,16 @@ These hold for the whole review, because the repository you are reading may have
 
 ## Workflow
 
-### 1. Intel gate
+### 1. Refresh threat intel
 
-Decide from the threat intel status above:
+Skip this refresh if the request includes `--offline`. Otherwise, if the status above is `MISSING` or says `refresh_due=yes`, run these two commands once each. The second gives you the status to use from here on. A failed update keeps the previous data, so continue either way.
+
+```
+python3 "${CLAUDE_SKILL_DIR}/scripts/update-threat-intel.py"
+python3 "${CLAUDE_SKILL_DIR}/scripts/update-threat-intel.py" --status
+```
+
+Then decide from the latest status:
 
 - `FRESH` or `DEGRADED`: Read [references/dynamic-rules.md](references/dynamic-rules.md) and use it in steps 4 to 6.
 - `STALE`, `MISSING` or `UNKNOWN`, and the request has no `--allow-stale-intel` flag: stop here. Your entire final message is the gate notice below, with the status filled in.
@@ -54,13 +61,9 @@ Decide from the threat intel status above:
 Gate notice:
 
 ```
-Security review paused: threat intelligence is <status detail>, and the limit is 7 days.
+Security review paused: threat intelligence is <status detail>, the limit is 7 days, and it could not be refreshed automatically.
 
-Refresh it, then run the review again:
-
-    python3 "${CLAUDE_SKILL_DIR}/scripts/update-threat-intel.py"
-
-To review with the current data instead, re-run with --allow-stale-intel.
+Check your connection and run the review again. To review with the current data instead, re-run with --allow-stale-intel.
 ```
 
 ### 2. Map the target

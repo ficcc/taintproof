@@ -55,7 +55,7 @@ taintproof
 
 The `taintproof` command is what installs the skill, so `npm install -g` alone isn't enough. It never runs during `npm install`.
 
-Either option copies the skill into `~/.claude/skills/taintproof` and downloads the threat intelligence, which reviews need before they can start. It won't overwrite a link or a git clone.
+Either option copies the skill into `~/.claude/skills/taintproof` and downloads the threat intelligence. It won't overwrite a link or a git clone.
 
 **Then add Semgrep:**
 
@@ -107,25 +107,27 @@ UV_TOOL_DIR="$HOME/.local/share/uv-tools" uv tool install semgrep
 
 ## Usage
 
-Ask in plain language, such as "is this safe to deploy?", or run the command:
+Run the command:
 
 ```text
 /taintproof [path] [--allow-stale-intel] [--offline] [deployment context]
 ```
+
+Use `/taintproof` by name. In testing, plain requests such as "is this safe to ship?" went to Claude Code's built-in `security-review` instead.
 
 | Example | What it does |
 |---|---|
 | `/taintproof` | Reviews the current directory |
 | `/taintproof src/api` | Reviews one folder, which is faster and uses fewer tokens |
 | `/taintproof . internal-only service, no personal data` | Gives context that affects severity |
-| `/taintproof --offline` | Skips both scanners, so no network calls are made for scanning |
+| `/taintproof --offline` | Skips both scanners and the threat intel refresh |
 | `/taintproof --allow-stale-intel` | Runs even if threat intelligence is out of date |
 
 Business context changes severity. If your README or deployment files don't show who can reach the service and what data it holds, tell the skill, or check the Assumptions section of the report.
 
 ## How it works
 
-1. **Intel gate:** checks that threat intelligence is under 7 days old, and pauses if not.
+1. **Refresh intel:** updates threat intelligence if it's over a day old, and pauses if the data is over 7 days old and can't be refreshed.
 2. **Map the target:** finds entry points, trust boundaries and data sensitivity.
 3. **Scan:** runs Semgrep and checks pinned dependencies against [OSV.dev](https://osv.dev).
 4. **Manual pass:** reads for flaws scanners miss, such as broken authorization and business logic.
@@ -142,26 +144,9 @@ The review runs in a forked subagent, so your main conversation stays small. It 
 | Semgrep rules | Downloaded on every scan |
 | Dependency advisories (OSV.dev) | Queried live on every review |
 | CVE scores (NVD) | Queried live when a review needs them |
-| Threat digest (CISA KEV, GitHub advisories, new NVD CVEs) | Updated when you run `update-threat-intel.py` |
+| Threat digest (CISA KEV, GitHub advisories, new NVD CVEs) | Refreshed when you start a review, if it's over a day old |
 
-Updating the digest uses no Claude tokens, so run it daily on a schedule.
-
-**Windows Task Scheduler (PowerShell):**
-
-```powershell
-$python = (Get-Command python).Source
-$script = "`"$HOME\.claude\skills\taintproof\scripts\update-threat-intel.py`""
-$action = New-ScheduledTaskAction -Execute $python -Argument $script
-$trigger = New-ScheduledTaskTrigger -Daily -At 9am
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RunOnlyIfNetworkAvailable
-Register-ScheduledTask -TaskName "Taintproof-ThreatIntel" -Action $action -Trigger $trigger -Settings $settings
-```
-
-**macOS or Linux (cron):**
-
-```bash
-(crontab -l 2>/dev/null; echo '0 9 * * * python3 "$HOME/.claude/skills/taintproof/scripts/update-threat-intel.py"') | crontab -
-```
+Nothing runs in the background. A refresh only happens when you invoke the skill, adds about 15 seconds to that review, and uses almost no tokens. To refresh by hand, run `scripts/update-threat-intel.py`.
 
 Optional environment variables raise API rate limits: `NVD_API_KEY` and `GITHUB_TOKEN`. Each is sent only to its own service.
 

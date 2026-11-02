@@ -33,6 +33,7 @@ GITHUB_ADVISORIES_URL = "https://api.github.com/advisories"
 NVD_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 
 MAX_AGE_DAYS = 7
+REFRESH_AFTER_DAYS = 1
 KEV_MIN_ENTRIES = 1000  # A real catalog is far larger; fewer means a broken or hijacked feed.
 KEV_RECENT_DAYS = 90
 KEV_RECENT_LIMIT = 40
@@ -343,9 +344,10 @@ def status():
         state = "DEGRADED"
     else:
         state = "FRESH"
+    refresh_due = "yes" if state != "FRESH" or age_days >= REFRESH_AFTER_DAYS else "no"
     print(
         f"INTEL_STATUS={state} age_days={age_days:.1f} max_age_days={MAX_AGE_DAYS} "
-        f"generated_at={match.group(1)} feeds=[{feeds_text}]"
+        f"refresh_due={refresh_due} generated_at={match.group(1)} feeds=[{feeds_text}]"
     )
     return 0
 
